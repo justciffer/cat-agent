@@ -26,11 +26,13 @@ public class CatAroundAdvice implements AroundAdvice{
 
         String type = getTransactionType(originMethodName,obj,method,args) + " ";
         String name = getTransactionName(originMethodName,obj,method,args);
-        System.out.println(String.format("around %s | type %s | name %s" ,originMethodName ,type,name));
+        System.out.println(String.format("around %s" ,originMethodName));
         Transaction t = Cat.newTransaction(type,name);
         Object o = null;
         try{
-            doBefore(originMethodName,obj,method,args);
+            try{
+                doBefore(originMethodName,obj,method,args);
+            }catch (Throwable ignore){}
             o = method.invoke(obj,args);
             t.setStatus(Transaction.SUCCESS);
         }catch (Exception e){
@@ -38,7 +40,9 @@ public class CatAroundAdvice implements AroundAdvice{
             Cat.logError(e);
             throw new Exception(e);
         }finally {
-            doAfter(originMethodName,obj,method,args,o);
+            try{
+                doAfter(originMethodName,obj,method,args,o);
+            }catch (Throwable ignore){}
             t.complete();
         }
         return o;

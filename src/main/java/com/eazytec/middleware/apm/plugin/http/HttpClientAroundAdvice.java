@@ -24,7 +24,36 @@ public class HttpClientAroundAdvice extends CatAroundAdvice {
         return  "[" + httpContext.getHttpMethod()+"]" + uri.getScheme()+"://"+uri.getAuthority()+getConcreteUri(uri.getPath());
     }
 
-    public static HttpContext getHttpContext(Object[] args) {
+    @Override
+    protected void doBefore(String originMethodName, Object obj, Method method, Object[] args){
+        HttpContext httpContext =  getHttpContext(args);
+
+        httpContext.getHttpMessage().setHeader(D_CLIENT_ADDR, Cat.getManager().getThreadLocalMessageTree().getIpAddress());
+        httpContext.getHttpMessage().setHeader(D_CLIENT_DOMAIN, Cat.getManager().getThreadLocalMessageTree().getDomain());
+        httpContext.getHttpMessage().setHeader(D_CALL_TRACE_MODE, "trace");
+
+        Cat.logEvent("Http.Method", httpContext.getHttpMethod());
+        RemoteContext context = new RemoteContext();
+        Cat.logRemoteCallClient(context);
+
+        for (Map.Entry<String, String> entry : context.getAllData().entrySet()) {
+            httpContext.getHttpMessage().setHeader(entry.getKey(),entry.getValue());
+        }
+    }
+
+    @Override
+    protected void doAfter(String originMethodName, Object obj, Method method, Object[] args,Object res){
+        Header addr = ((HttpResponse)res).getFirstHeader(D_CALL_SERVER_ADDR);
+        Header domain = ((HttpResponse)res).getFirstHeader(D_CALL_SERVER_DOMAIN);
+        if(null != domain){
+            Cat.logEvent(E_SERVER_DOMAIN,domain.getValue());
+        }
+        if(null != addr){
+            Cat.logEvent(E_SERVER_ADDR,addr.getValue());
+        }
+    }
+
+    private static HttpContext getHttpContext(Object[] args) {
         HttpContext context = new HttpContext();
 
         HttpHost httpHost = null;
@@ -62,33 +91,6 @@ public class HttpClientAroundAdvice extends CatAroundAdvice {
             context.setHttpMethod(httpMethod);
         }
         return context;
-    }
-
-    protected void doBefore(String originMethodName, Object obj, Method method, Object[] args){
-        HttpContext httpContext =  getHttpContext(args);
-
-        httpContext.getHttpMessage().setHeader(D_CLIENT_ADDR, Cat.getManager().getThreadLocalMessageTree().getIpAddress());
-        httpContext.getHttpMessage().setHeader(D_CLIENT_DOMAIN, Cat.getManager().getThreadLocalMessageTree().getDomain());
-        httpContext.getHttpMessage().setHeader(D_CALL_TRACE_MODE, "trace");
-
-        Cat.logEvent("Http.Method", httpContext.getHttpMethod());
-        RemoteContext context = new RemoteContext();
-        Cat.logRemoteCallClient(context);
-
-        for (Map.Entry<String, String> entry : context.getAllData().entrySet()) {
-            httpContext.getHttpMessage().setHeader(entry.getKey(),entry.getValue());
-        }
-    }
-
-    protected void doAfter(String originMethodName, Object obj, Method method, Object[] args,Object res){
-        Header addr = ((HttpResponse)res).getFirstHeader(D_CALL_SERVER_ADDR);
-        Header domain = ((HttpResponse)res).getFirstHeader(D_CALL_SERVER_DOMAIN);
-        if(null != domain){
-            Cat.logEvent(E_SERVER_DOMAIN,domain.getValue());
-        }
-        if(null != addr){
-            Cat.logEvent(E_SERVER_ADDR,addr.getValue());
-        }
     }
 
     public static class HttpContext{

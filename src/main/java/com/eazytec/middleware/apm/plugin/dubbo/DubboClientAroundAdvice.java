@@ -39,6 +39,7 @@ public class DubboClientAroundAdvice extends CatAroundAdvice {
         return "unknown";
     }
 
+    @Override
     protected void doBefore(String originMethodName, Object obj, Method method, Object[] args){
         if(args.length > 0 && args[0] != null) {
             RpcInvocation rpcInvocation = (RpcInvocation) args[0];
@@ -55,6 +56,7 @@ public class DubboClientAroundAdvice extends CatAroundAdvice {
         }
     }
 
+    @Override
     protected void doAfter(String originMethodName, Object obj, Method method, Object[] args,Object res){
         Result result = ((Result)res);
         String serverDomain = result.getAttachment(D_CALL_SERVER_DOMAIN);

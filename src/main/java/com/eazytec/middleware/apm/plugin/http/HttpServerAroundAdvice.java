@@ -20,6 +20,7 @@ public class HttpServerAroundAdvice extends CatAroundAdvice {
         return  "[" + request.getMethod()+"]" + getConcreteUri(request.getRequestURI());
     }
 
+    @Override
     protected void doBefore(String originMethodName, Object obj, Method method, Object[] args){
         HttpServletRequest request = (HttpServletRequest)args[0];
 
@@ -37,6 +38,7 @@ public class HttpServerAroundAdvice extends CatAroundAdvice {
         response.setHeader(D_CALL_SERVER_ADDR, Cat.getManager().getThreadLocalMessageTree().getIpAddress());
     }
 
+    @Override
     protected void doAfter(String originMethodName, Object obj, Method method, Object[] args,Object res){
     }
 
