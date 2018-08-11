@@ -37,10 +37,10 @@ public class AgentInit {
         Pointcut service =  Pointcut.create("spring-service","com.eazytec.middleware.apm.advice.CatAroundAdvice")
                 .execution(Execution.create("org.springframework.stereotype.Service"));
         regular.add(service);
-        Pointcut dubboServer =  Pointcut.create("dubbo-server","com.eazytec.middleware.apm.advice.CatAroundAdvice")
+        Pointcut dubboServer =  Pointcut.create("dubbo-server","com.eazytec.middleware.apm.advice.DubboServerAroundAdvice")
                 .execution(Execution.create("com.alibaba.dubbo.rpc.cluster.support.AbstractClusterInvoker","invoke",""));
         regular.add(dubboServer);
-        Pointcut dubboClient =  Pointcut.create("dubbo-client","com.eazytec.middleware.apm.advice.CatAroundAdvice")
+        Pointcut dubboClient =  Pointcut.create("dubbo-client","com.eazytec.middleware.apm.advice.DubboClientAroundAdvice")
                 .execution(Execution.create("com.alibaba.dubbo.rpc.proxy.AbstractProxyInvoker","invoke",""));
         regular.add(dubboClient);
     }
