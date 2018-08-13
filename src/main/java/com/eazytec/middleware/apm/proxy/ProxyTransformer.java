@@ -7,6 +7,7 @@ import com.eazytec.middleware.apm.match.Execution;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
 import java.security.ProtectionDomain;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -63,12 +64,19 @@ public class ProxyTransformer implements ClassFileTransformer{
         }
 
         if (!cc.isInterface()) {
-            //注解
-            Execution execution = AgentInit.regular.matchAnnotation(cc,loader);
+            //TODO: 匹配CLASS 暂定之匹配一种
+            //接口
+            Execution execution = AgentInit.regular.matchInterface(cc,loader);
+            if(execution == null) {
+                //注解
+                execution = AgentInit.regular.matchAnnotation(cc,loader);
+            }
+
             if(execution != null){
                 byteCode = matchMethod(Collections.singletonList(execution),cc, className, byteCode);
             }
             else{
+                //类名
                 List<Execution> list = AgentInit.regular.matchClassName(cc,loader);
                 if(list != null && list.size() > 0){
                     byteCode = matchMethod(list,cc, className, byteCode);

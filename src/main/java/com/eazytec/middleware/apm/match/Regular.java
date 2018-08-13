@@ -11,17 +11,21 @@ import java.util.Map;
 
 public class Regular extends ArrayList<Pointcut>{
 
+    private Map<String,Execution> interfaces = new HashMap<>();
+
     private Map<String,Execution> annotations = new HashMap<>();
+    private Map<String,Class> annotationsCache = new HashMap<>();
 
     private Map<String,List<Execution>> classNames = new HashMap<>();
-
-    private Map<String,Class> annotationsCache = new HashMap<>();
 
     @Override
     public boolean add(Pointcut pointcut){
         super.add(pointcut);
         for(Execution execution : pointcut.getExecutions()){
-            if(execution.hasAnnotation()){
+            if(execution.hasInterfaceName()){
+                interfaces.put(execution.getAnnotation(),execution);
+            }
+            else if(execution.hasAnnotation()){
                 annotations.put(execution.getAnnotation(),execution);
             }
             else{
@@ -49,6 +53,27 @@ public class Regular extends ArrayList<Pointcut>{
         }
         return null;
     }
+
+    public Execution matchInterface(CtClass ctClass,ClassLoader classLoader){
+        if(interfaces.keySet().size() > 0){
+            CtClass[] clses = null;
+            try {
+                clses = ctClass.getInterfaces();
+            } catch (NotFoundException ignore) {
+                System.err.println("Regular matchInterface:" + ignore.getMessage());
+            }
+
+            if(clses != null){
+                for(CtClass cls:clses){
+                    if(interfaces.containsKey(cls.getName())){
+                        return interfaces.get(cls.getName());
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
 
     public Execution matchAnnotation(CtClass ctClass,ClassLoader classLoader){
         if(annotations.keySet().size() > 0){
