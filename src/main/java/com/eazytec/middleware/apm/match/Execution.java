@@ -9,6 +9,7 @@ public class Execution {
     private String interfaceName;
     private String className;
     private String methodName;
+    private Integer modifiers;
     private List<String> paramTypes;
 
     public static Execution createByClassName(String className){
@@ -113,6 +114,18 @@ public class Execution {
     }
     public Execution interfaceName(String interfaceName) {
         this.interfaceName = interfaceName;
+        return this;
+    }
+
+    public Integer getModifiers() {
+        return modifiers;
+    }
+
+    public void setModifiers(Integer modifiers) {
+        this.modifiers = modifiers;
+    }
+    public Execution modifiers(Integer modify) {
+        this.modifiers = modify;
         return this;
     }
 }

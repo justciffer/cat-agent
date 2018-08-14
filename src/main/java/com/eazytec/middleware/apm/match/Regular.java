@@ -2,6 +2,7 @@ package com.eazytec.middleware.apm.match;
 
 
 
+import com.eazytec.middleware.apm.AgentInit;
 import javassist.*;
 
 import java.util.ArrayList;
@@ -23,7 +24,7 @@ public class Regular extends ArrayList<Pointcut>{
         super.add(pointcut);
         for(Execution execution : pointcut.getExecutions()){
             if(execution.hasInterfaceName()){
-                interfaces.put(execution.getAnnotation(),execution);
+                interfaces.put(execution.getInterfaceName(),execution);
             }
             else if(execution.hasAnnotation()){
                 annotations.put(execution.getAnnotation(),execution);
@@ -96,6 +97,16 @@ public class Regular extends ArrayList<Pointcut>{
     }
 
     public boolean matchMethod(CtMethod ctMethod,Execution execution) {
+        if(null != execution.getModifiers()) {
+            if (!execution.getModifiers().equals(ctMethod.getModifiers())) {
+                return false;
+            }
+        }else{
+            if(!AgentInit.checkModifiers(ctMethod)){
+                return false;
+            }
+        }
+
         if(execution.getMethodName() == null || execution.getMethodName().length() == 0){
             return true;
         }
@@ -105,6 +116,7 @@ public class Regular extends ArrayList<Pointcut>{
         if(execution.getParamTypes() == null || execution.getParamTypes().size() == 0){
             return true;
         }
+
         CtClass[] typeCls = new CtClass[0];
         try {
             typeCls = ctMethod.getParameterTypes();

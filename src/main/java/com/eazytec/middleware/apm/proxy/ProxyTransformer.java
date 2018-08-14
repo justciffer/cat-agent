@@ -19,22 +19,13 @@ public class ProxyTransformer implements ClassFileTransformer{
         byte[] byteCode = classfileBuffer;
         className = className.replace('/', '.');
         //排除包路径
-        Set<String> packages = AgentInit.excludePackages;
-        if (null != packages && !packages.isEmpty()) {
-            for (String packageName : packages) {
-                if (className.startsWith(packageName)) {
-                    return byteCode;
-                }
-            }
+        if(!AgentInit.checkPackages(className)){
+            return byteCode;
         }
+
         //排除关键词
-        Set<String> words = AgentInit.excludeKeyWords;
-        if (null != words && !words.isEmpty()) {
-            for (String word : words) {
-                if (className.contains(word)) {
-                    return byteCode;
-                }
-            }
+        if(!AgentInit.checkWords(className)){
+            return byteCode;
         }
 
         if (null == loader) {
@@ -64,7 +55,7 @@ public class ProxyTransformer implements ClassFileTransformer{
         }
 
         if (!cc.isInterface()) {
-            //TODO: 匹配CLASS 暂定之匹配一种
+            //TODO: 匹配CLASS 暂定之匹配一种，改成scope排序，范围最小的优先
             //接口
             Execution execution = AgentInit.regular.matchInterface(cc,loader);
             if(execution == null) {
@@ -92,11 +83,7 @@ public class ProxyTransformer implements ClassFileTransformer{
         try {
             CtMethod[] methods = cc.getDeclaredMethods();
             if (null != methods && methods.length > 0) {
-                //TODO： 方法名称，代理实现 通过配置 main方法
                 for (CtMethod m : methods) {
-                    if(!checkModify(m)){
-                        continue;
-                    }
                     for (Execution execution : executions) {
                         if(AgentInit.regular.matchMethod(m,execution)){
                             MethodProxy.aroundProxy(className, cc, m, execution.getAdvice());
@@ -109,20 +96,8 @@ public class ProxyTransformer implements ClassFileTransformer{
             cc.detach();
         } catch (Exception e) {
             System.err.println("ProxyTransformer matchMethod:" +e.getMessage());
+            e.printStackTrace();
         }
         return byteCode;
-    }
-
-    private boolean checkModify(CtMethod m ){
-        Set<Integer> modifies = AgentInit.allowedMethodModifies;
-        if (null == modifies || modifies.isEmpty()) {
-            return true;
-        }
-        for (Integer modify : modifies) {
-            if (modify.equals(m.getModifiers())) {
-                return true;
-            }
-        }
-        return false;
     }
 }

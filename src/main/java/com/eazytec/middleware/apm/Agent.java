@@ -6,8 +6,12 @@ import java.io.IOException;
 import java.lang.instrument.Instrumentation;
 
 public class Agent {
+    /**
+     * agentArs : debug
+     */
     public static void premain(String agentArs, Instrumentation inst)  throws IOException {
         //TODO: 配置文件 agentArs
+        AgentDebug.open(agentArs);
         inst.addTransformer(new ProxyTransformer());
     }
 

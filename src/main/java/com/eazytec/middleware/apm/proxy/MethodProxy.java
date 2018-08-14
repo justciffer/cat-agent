@@ -1,7 +1,9 @@
 package com.eazytec.middleware.apm.proxy;
 
 
+import com.eazytec.middleware.apm.AgentDebug;
 import javassist.*;
+import javassist.bytecode.AccessFlag;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,14 +41,15 @@ public class MethodProxy {
 
     public static void aroundProxy(String targetClassName, CtClass targetClass, CtMethod targetMethod, String advice)
             throws NotFoundException, CannotCompileException {
+        AgentDebug.info("create proxy -> %s",targetMethod.getLongName());
 
         String uniqueName = targetMethod.getName() + Math.abs(targetMethod.hashCode());
-        System.out.println("---------" + uniqueName);
 
         //copy方法(不会复制注解)  %targetMethod%$CatProxy
         CtMethod newMethod = CtNewMethod.copy(targetMethod,targetClass,null);
         String newMethodName = uniqueName + PROXY_CLASS_NAME_SUFFIX;
         newMethod.setName(newMethodName);
+        newMethod.setModifiers(AccessFlag.PUBLIC); //TODO: 必须设置成public
         targetClass.addMethod(newMethod);
 
         //创建变量存储method对象  %targetMethod_name%_CatProxyMethod
@@ -55,10 +58,30 @@ public class MethodProxy {
         targetClass.addField(ctField);
 
         //替换 targetMethod内容为代理函数
-        targetMethod.setBody(getMethodBody(targetClassName,targetMethod,advice,newMethod.getName(),methodCache));
+        String logName = targetClass.getSimpleName() + "." + getMethodLogName(targetMethod);
+        String methodCode = getMethodBody(targetClassName,targetMethod,advice,newMethod.getName(),methodCache,logName);
+//        System.out.println(">>> cat agent debug <<  [ code ] :   " + methodCode);
+        targetMethod.setBody(methodCode);
     }
 
-    private static String getMethodBody(String targetClassName,CtMethod targetMethod,String advice,String newMethodName,String methodCache) throws NotFoundException {
+    private static String getMethodLogName(CtMethod targetMethod){
+        StringBuilder stringBuilder = new StringBuilder(targetMethod.getName());
+        stringBuilder.append("(");
+        try {
+            CtClass[] clses = targetMethod.getParameterTypes();
+            for(int i = 0; i< clses.length ;i ++){
+                stringBuilder.append(clses[i].getSimpleName());
+                if(i != clses.length-1){
+                    stringBuilder.append(",");
+                }
+            }
+        } catch (NotFoundException ignore) {
+        }
+        stringBuilder.append(")");
+        return stringBuilder.toString();
+    }
+
+    private static String getMethodBody(String targetClassName,CtMethod targetMethod,String advice,String newMethodName,String methodCache,String logName) throws NotFoundException {
         String formatStr = CtClass.voidType.getName().equals(targetMethod.getReturnType().getName()) ? void_method_format : return_method_format;
         List<String> formats = new ArrayList<>();
         formats.add(AROUND_ASPECTJ_HANDLER_INTERFACE);
@@ -67,11 +90,10 @@ public class MethodProxy {
         formats.add( methodCache);
         formats.add( targetClassName);
         formats.add( newMethodName);
-        formats.add( "\""+targetMethod.getLongName()+"\"");
+        formats.add( "\""+logName+"\"");
         formats.add( methodCache);
 
         String code = String.format(formatStr,formats.toArray(new Object[]{}));
-//        System.out.println(code);
         return code;
     }
 
