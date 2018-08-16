@@ -2,7 +2,6 @@ package com.eazytec.middleware.apm.plugin.db;
 
 import com.dianping.cat.Cat;
 import com.dianping.cat.message.Transaction;
-import com.eazytec.middleware.apm.AgentDebug;
 import com.eazytec.middleware.apm.advice.CatAroundAdvice;
 import com.mysql.jdbc.ConnectionImpl;
 import com.mysql.jdbc.PreparedStatement;
@@ -37,7 +36,7 @@ public class MysqlClientAroundAdvice extends CatAroundAdvice {
             String type = "db.mysql ";
             String name = (String)originalSqlField.get(ps);
 
-            AgentDebug.info("invoke -> %s",originMethodName);
+//            System.out.println(String.format("invoke -> %s",originMethodName));
 
             Transaction t = Cat.newTransaction(type,name);
             if (ps.getConnection() instanceof ConnectionImpl){

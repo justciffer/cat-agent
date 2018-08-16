@@ -2,7 +2,6 @@ package com.eazytec.middleware.apm.advice;
 
 import com.dianping.cat.Cat;
 import com.dianping.cat.message.Transaction;
-import com.eazytec.middleware.apm.AgentDebug;
 
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -31,8 +30,7 @@ public class CatAroundAdvice implements AroundAdvice{
             //不开启监控
             return method.invoke(obj,args);
         }
-
-        AgentDebug.info("invoke -> %s",originMethodName);
+//        System.out.println(String.format("invoke -> %s",originMethodName));
 
         Transaction t = Cat.newTransaction(type,name);
         Object o = null;

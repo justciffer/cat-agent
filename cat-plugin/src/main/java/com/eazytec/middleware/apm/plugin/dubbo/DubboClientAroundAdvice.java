@@ -5,15 +5,8 @@ import com.alibaba.dubbo.rpc.Result;
 import com.alibaba.dubbo.rpc.RpcInvocation;
 import com.dianping.cat.Cat;
 import com.eazytec.middleware.apm.advice.CatAroundAdvice;
-import org.apache.http.HttpHost;
-import org.apache.http.HttpMessage;
-import org.apache.http.HttpRequest;
-import org.apache.http.client.methods.HttpUriRequest;
 
 import java.lang.reflect.Method;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.HashMap;
 import java.util.Map;
 
 public class DubboClientAroundAdvice extends CatAroundAdvice {

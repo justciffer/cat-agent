@@ -6,16 +6,30 @@ import com.eazytec.middleware.apm.match.Regular;
 import javassist.CtMethod;
 import javassist.bytecode.AccessFlag;
 
+import java.io.File;
+import java.lang.reflect.Method;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 public class AgentInit {
 
     public static final Regular regular = new Regular();
 
-    public static final Set<String> excludePackages = new HashSet<>();
-    public static final Set<String> excludeKeyWords = new HashSet<>();
-    public static final Set<Integer> allowedMethodModifiers = new HashSet<>(); //方法默认访问控制
+    private static final Set<String> excludePackages = new HashSet<>();
+    private static final Set<String> excludeKeyWords = new HashSet<>();
+    private static final Set<Integer> allowedMethodModifiers = new HashSet<>(); //方法默认访问控制
+
+    private static final Map<String,String> modes = new HashMap<>();
+
+    private static String pluginPath = null;
+
+
+    private static boolean isLoaded = false;
+    private static String mainClassLoader = null;
 
     static {
         excludePackages.add("org.aspectj.");
@@ -35,50 +49,87 @@ public class AgentInit {
 
         allowedMethodModifiers.add(AccessFlag.PUBLIC);
 
+        modes.put("springboot","org.springframework.boot.loader.LaunchedURLClassLoader");
+
         regular.add(
                 Pointcut.create("spring-start","com.eazytec.middleware.apm.advice.CatAroundAdvice")
-                .execution(Execution.createByClassName("org.springframework.context.support.AbstractApplicationContext").methodName("finishRefresh").modifiers(AccessFlag.PROTECTED))
+                        .execution(Execution.createByClassName("org.springframework.context.support.AbstractApplicationContext").methodName("finishRefresh").modifiers(AccessFlag.PROTECTED))
         );
         regular.add(
                 Pointcut.create("spring-controller","com.eazytec.middleware.apm.plugin.spring.ControllerAroundAdvice")
-                .execution(Execution.createByAnnotation("org.springframework.stereotype.Controller"))
+                        .execution(Execution.createByAnnotation("org.springframework.stereotype.Controller"))
         );
 
         regular.add(
                 Pointcut.create("spring-service","com.eazytec.middleware.apm.plugin.spring.ServiceAroundAdvice")
-                .execution(Execution.createByAnnotation("org.springframework.stereotype.Service"))
+                        .execution(Execution.createByAnnotation("org.springframework.stereotype.Service"))
         );
 
         regular.add(
                 Pointcut.create("dubbo-client","com.eazytec.middleware.apm.plugin.dubbo.DubboClientAroundAdvice")
-                .execution(Execution.createByClassName("com.alibaba.dubbo.rpc.cluster.support.AbstractClusterInvoker").methodName("invoke"))
+                        .execution(Execution.createByClassName("com.alibaba.dubbo.rpc.cluster.support.AbstractClusterInvoker").methodName("invoke"))
         );
 
         regular.add(
                 Pointcut.create("dubbo-server","com.eazytec.middleware.apm.plugin.dubbo.DubboServerAroundAdvice")
-                .execution(Execution.createByClassName("com.alibaba.dubbo.rpc.proxy.AbstractProxyInvoker").methodName("invoke"))
+                        .execution(Execution.createByClassName("com.alibaba.dubbo.rpc.proxy.AbstractProxyInvoker").methodName("invoke"))
         );
 
         regular.add(
                 Pointcut.create("http-client","com.eazytec.middleware.apm.plugin.http.HttpClientAroundAdvice")
-                .execution(Execution.createByInterface("org.apache.http.client.HttpClient"))
+                        .execution(Execution.createByInterface("org.apache.http.client.HttpClient"))
         );
 
         regular.add(
                 Pointcut.create("http-server","com.eazytec.middleware.apm.plugin.http.HttpServerAroundAdvice")
-                .execution(Execution.createByClassName("org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter")
-                        .methodName("handleInternal").modifiers(AccessFlag.PROTECTED) //TODO：覆盖默认配置
-                        .paramTypes("javax.servlet.http.HttpServletRequest,javax.servlet.http.HttpServletResponse,org.springframework.web.method.HandlerMethod"))
+                        .execution(Execution.createByClassName("org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter")
+                                .methodName("handleInternal").modifiers(AccessFlag.PROTECTED) //TODO：覆盖默认配置
+                                .paramTypes("javax.servlet.http.HttpServletRequest,javax.servlet.http.HttpServletResponse,org.springframework.web.method.HandlerMethod"))
         );
 
         regular.add(
                 Pointcut.create("db-mysql","com.eazytec.middleware.apm.plugin.db.MysqlClientAroundAdvice")
-                .execution(Execution.createByClassName("com.mysql.jdbc.PreparedStatement").methodName("execute"))
-                .execution(Execution.createByClassName("com.mysql.jdbc.PreparedStatement").methodName("executeQuery"))
-                .execution(Execution.createByClassName("com.mysql.jdbc.PreparedStatement").methodName("executeUpdate"))
+                        .execution(Execution.createByClassName("com.mysql.jdbc.PreparedStatement").methodName("execute"))
+                        .execution(Execution.createByClassName("com.mysql.jdbc.PreparedStatement").methodName("executeQuery"))
+                        .execution(Execution.createByClassName("com.mysql.jdbc.PreparedStatement").methodName("executeUpdate"))
         );
 
+    }
+
+    public static void init(String args){
+        AgentDebug.open(args);
+        // 初始化默认方法
+        mainClassLoader = classLoader(args);
+        AgentDebug.info("ClassLoader :" + mainClassLoader);
+        pluginPath = getPluginPath();
+        AgentDebug.info("plugin file :" + pluginPath);
+
         AgentDebug.info("config init");
+    }
+
+    private static String getPluginPath()
+    {
+        // 关键是这行...
+        String path = AgentInit.class.getProtectionDomain().getCodeSource().getLocation().getFile();
+        try
+        {
+            path = java.net.URLDecoder.decode(path, "UTF-8"); // 转换处理中文及空格
+        }
+        catch (java.io.UnsupportedEncodingException e)
+        {  }
+        return new File(path).getParent()+ File.separator + "cat-plugin.jar";
+    }
+
+
+    private static String classLoader(String args){
+        if(args != null ){
+            for(Map.Entry<String,String> entry : modes.entrySet()){
+                if(args.contains(entry.getKey())){
+                    return entry.getValue();
+                }
+            }
+        }
+        return Thread.currentThread().getContextClassLoader().getClass().getName();
     }
 
     public static boolean checkModifiers(CtMethod m ){
@@ -119,6 +170,33 @@ public class AgentInit {
         return true;
     }
 
+    public static void loadPluginJars(ClassLoader classLoader) {
+        if (!isLoaded) {
+            try {
+                if (classLoader != null && classLoader instanceof URLClassLoader
+                        && classLoader.getClass().getName().contains(mainClassLoader)) {
+                    Method method = null;
+                    try {
+                        method = classLoader.getClass().getDeclaredMethod("addURL", new Class[]{URL.class});
+                    } catch (Throwable t) {
+                        method = classLoader.getClass().getSuperclass().getDeclaredMethod("addURL", new Class[]{URL.class});
+                    }
+                    if(method != null){
+                        method.setAccessible(true);
+                        File plugin = new File(AgentInit.pluginPath);
+                        if(!plugin.exists()){
+                            throw new Exception("no plugin jar find in :" + AgentInit.pluginPath);
+                        }
+                        method.invoke(classLoader, new Object[]{plugin.toURI().toURL()});
+                        AgentDebug.info("classLoader init finish");
+                        isLoaded = true;
+                    }
+                }
 
+            } catch (Exception e) {
+                System.err.println("init ClassLoader path error : " + e.getMessage());
+            }
+        }
+    }
 
 }

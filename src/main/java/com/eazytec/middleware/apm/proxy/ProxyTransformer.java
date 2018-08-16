@@ -1,23 +1,33 @@
 package com.eazytec.middleware.apm.proxy;
 
+import com.eazytec.middleware.apm.Agent;
 import com.eazytec.middleware.apm.AgentInit;
-import javassist.*;
 import com.eazytec.middleware.apm.match.Execution;
+import javassist.*;
 
+import java.io.File;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
+import java.lang.reflect.Method;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.security.ProtectionDomain;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 public class ProxyTransformer implements ClassFileTransformer{
 
     @Override
     public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {
+        if(loader.getClass().getName().equals("sun.reflect.DelegatingClassLoader")){
+            return classfileBuffer;
+        }
+        //加载插件
+        AgentInit.loadPluginJars(loader);
+
         byte[] byteCode = classfileBuffer;
         className = className.replace('/', '.');
+
         //排除包路径
         if(!AgentInit.checkPackages(className)){
             return byteCode;
@@ -31,12 +41,12 @@ public class ProxyTransformer implements ClassFileTransformer{
         if (null == loader) {
             loader = Thread.currentThread().getContextClassLoader();
         }
+
         byteCode = matchClass(loader, className, byteCode);
         return byteCode;
     }
 
-    //match class
-    private byte[] matchClass(ClassLoader loader, String className, byte[] byteCode) {
+    public static CtClass getCLass(String className,ClassLoader loader){
         CtClass cc = null;
         ClassPool cp = ClassPool.getDefault();
         try {
@@ -49,6 +59,12 @@ public class ProxyTransformer implements ClassFileTransformer{
                 System.err.println("ProxyTransformer matchClass not found  class :" + className);
             }
         }
+        return cc;
+    }
+
+    //match class
+    private byte[] matchClass(ClassLoader loader, String className, byte[] byteCode) {
+        CtClass cc = getCLass(className,loader);
 
         if (null == cc) {
             return byteCode;

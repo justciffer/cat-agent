@@ -8,7 +8,7 @@ public class AgentDebug {
     private final static String info = "---------------------------- [ cat agent ] : %s";
 
     public static void open(String arg) {
-        if(AgentDebug.DEBUG.equals(arg)){
+        if(arg != null && arg.contains(AgentDebug.DEBUG)){
             debug = true;
             AgentDebug.info("open debug mode!");
         }
