@@ -30,9 +30,9 @@ public class HttpServerAroundAdvice extends CatAroundAdvice {
         HttpServletRequest request = (HttpServletRequest)args[0];
 
         RemoteContext context = new RemoteContext();
-        context.addProperty(Cat.Context.CHILD, request.getHeader(Cat.Context.CHILD));
-        context.addProperty(Cat.Context.PARENT, request.getHeader(Cat.Context.PARENT));
-        context.addProperty(Cat.Context.ROOT, request.getHeader(Cat.Context.ROOT));
+        context.addProperty(Cat.Context.CHILD, request.getHeader(D_TRACE_CHILD_ID));
+        context.addProperty(Cat.Context.PARENT, request.getHeader(D_TRACE_PARENT_ID));
+        context.addProperty(Cat.Context.ROOT, request.getHeader(D_TRACE_ROOT_ID));
         Cat.logRemoteCallServer(context);
 
         Cat.logEvent(E_CLIENT_ADDR,request.getHeader(D_CLIENT_ADDR));

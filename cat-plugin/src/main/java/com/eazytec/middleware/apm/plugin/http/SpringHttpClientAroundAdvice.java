@@ -38,9 +38,21 @@ public class SpringHttpClientAroundAdvice extends CatAroundAdvice {
         RemoteContext context = new RemoteContext();
         Cat.logRemoteCallClient(context);
 
-        for (Map.Entry<String, String> entry : context.getAllData().entrySet()) {
-            request.getHeaders().add(entry.getKey(),entry.getValue());
+        String messageId = context.getProperty(Cat.Context.CHILD);
+        String rootId = context.getProperty(Cat.Context.ROOT);
+        String parentId = context.getProperty(Cat.Context.PARENT);
+        if (messageId != null) {
+            request.getHeaders().add(D_TRACE_CHILD_ID,messageId);
         }
+        if (parentId != null) {
+            request.getHeaders().add(D_TRACE_PARENT_ID,parentId);
+        }
+        if (rootId != null) {
+            request.getHeaders().add(D_TRACE_ROOT_ID,rootId);
+        }
+    /*    for (Map.Entry<String, String> entry : context.getAllData().entrySet()) {
+            request.getHeaders().add(entry.getKey(),entry.getValue());
+        }*/
     }
 
     @Override

@@ -25,7 +25,7 @@ public class AgentInit {
 
     private static final Map<String,String> modes = new HashMap<>();
 
-    private static String pluginPath = null;
+    public static String pluginPath = null;
 
 
     private static boolean isLoaded = false;

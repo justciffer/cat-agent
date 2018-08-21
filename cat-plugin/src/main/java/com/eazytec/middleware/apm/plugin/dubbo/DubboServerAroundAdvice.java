@@ -31,9 +31,9 @@ public class DubboServerAroundAdvice extends CatAroundAdvice {
             RpcInvocation rpcInvocation = (RpcInvocation) args[0];
 
             RemoteContext context = new RemoteContext();
-            context.addProperty(Cat.Context.CHILD, rpcInvocation.getAttachment(Cat.Context.CHILD));
-            context.addProperty(Cat.Context.PARENT, rpcInvocation.getAttachment(Cat.Context.PARENT));
-            context.addProperty(Cat.Context.ROOT, rpcInvocation.getAttachment(Cat.Context.ROOT));
+            context.addProperty(Cat.Context.CHILD, rpcInvocation.getAttachment(D_TRACE_CHILD_ID));
+            context.addProperty(Cat.Context.PARENT, rpcInvocation.getAttachment(D_TRACE_PARENT_ID));
+            context.addProperty(Cat.Context.ROOT, rpcInvocation.getAttachment(D_TRACE_ROOT_ID));
             Cat.logRemoteCallServer(context);
 
             Cat.logEvent(E_CLIENT_ADDR,rpcInvocation.getAttachment(D_CLIENT_ADDR));

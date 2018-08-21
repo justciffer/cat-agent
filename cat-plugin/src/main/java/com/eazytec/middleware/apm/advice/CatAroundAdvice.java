@@ -14,6 +14,11 @@ public class CatAroundAdvice implements AroundAdvice{
     public static final String D_CALL_SERVER_ADDR = "X-CAT-SERVER-ADDR";
     public static final String D_CALL_SERVER_DOMAIN = "X-CAT-SERVER-DOMAIN";
 
+    public static final String D_TRACE_ROOT_ID = "X-CAT-ROOT-ID";
+    public static final String D_TRACE_PARENT_ID = "X-CAT-PARENT-ID";
+    public static final String D_TRACE_CHILD_ID = "X-CAT-CHILD-ID";
+
+
     public static final String E_SERVER_DOMAIN = "server.domain";
     public static final String E_SERVER_ADDR = "server.address";
 

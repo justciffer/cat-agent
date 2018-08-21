@@ -43,9 +43,21 @@ public class DubboClientAroundAdvice extends CatAroundAdvice {
             RemoteContext context = new RemoteContext();
             Cat.logRemoteCallClient(context);
 
-            for (Map.Entry<String, String> entry : context.getAllData().entrySet()) {
-                rpcInvocation.setAttachment(entry.getKey(),entry.getValue());
+            String messageId = context.getProperty(Cat.Context.CHILD);
+            String rootId = context.getProperty(Cat.Context.ROOT);
+            String parentId = context.getProperty(Cat.Context.PARENT);
+            if (messageId != null) {
+                rpcInvocation.setAttachment(D_TRACE_CHILD_ID,messageId);
             }
+            if (parentId != null) {
+                rpcInvocation.setAttachment(D_TRACE_PARENT_ID,parentId);
+            }
+            if (rootId != null) {
+                rpcInvocation.setAttachment(D_TRACE_ROOT_ID,rootId);
+            }
+         /*   for (Map.Entry<String, String> entry : context.getAllData().entrySet()) {
+                rpcInvocation.setAttachment(entry.getKey(),entry.getValue());
+            }*/
         }
     }
 
