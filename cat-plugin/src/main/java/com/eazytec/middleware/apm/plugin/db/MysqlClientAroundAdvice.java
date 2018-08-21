@@ -33,8 +33,8 @@ public class MysqlClientAroundAdvice extends CatAroundAdvice {
         if (effective && obj instanceof PreparedStatement) {
             PreparedStatement ps = (PreparedStatement)obj;
 
-            String type = "db.mysql ";
-            String name = (String)originalSqlField.get(ps);
+            String type = "SQL";
+            String name = SPLIT + (String)originalSqlField.get(ps);
 
 //            System.out.println(String.format("invoke -> %s",originMethodName));
 

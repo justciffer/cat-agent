@@ -11,7 +11,7 @@ public class HttpServerAroundAdvice extends CatAroundAdvice {
 
     @Override
     protected String getTransactionType(String originMethodName, Object obj, Method method, Object[] args) {
-        return "Receive.HttpRequest";
+        return "Service";
     }
 
     @Override
@@ -22,7 +22,7 @@ public class HttpServerAroundAdvice extends CatAroundAdvice {
             return "";
         }
 
-        return  "[" + request.getMethod()+"]" + getConcreteUri(request.getRequestURI());
+        return  "[http-" + request.getMethod()+"]" + getConcreteUri(request.getRequestURI());
     }
 
     @Override

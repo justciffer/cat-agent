@@ -8,7 +8,7 @@ public class ServiceAroundAdvice extends CatAroundAdvice {
 
     @Override
     protected String getTransactionType(String originMethodName, Object obj, Method method, Object[] args) {
-        return "[Service] " + super.getTransactionType(originMethodName, obj, method, args);
+        return "Spring-Service";
     }
 
 }

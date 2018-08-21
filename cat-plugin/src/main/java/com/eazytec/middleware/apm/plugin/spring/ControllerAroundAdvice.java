@@ -8,7 +8,7 @@ public class ControllerAroundAdvice extends CatAroundAdvice {
 
     @Override
     protected String getTransactionType(String originMethodName, Object obj, Method method, Object[] args) {
-        return "[Controller] " + super.getTransactionType(originMethodName, obj, method, args);
+        return "URL";
     }
 
 }

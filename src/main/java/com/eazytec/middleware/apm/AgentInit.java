@@ -47,7 +47,7 @@ public class AgentInit {
      /*   excludeKeyWords.add("$Proxy");
         excludeKeyWords.add("CGLIB$$");*/
 
-        allowedMethodModifiers.add(AccessFlag.PUBLIC);
+//        allowedMethodModifiers.add(AccessFlag.PUBLIC); //TODO：默认获取public
 
         modes.put("springboot","org.springframework.boot.loader.LaunchedURLClassLoader");
 
@@ -55,43 +55,54 @@ public class AgentInit {
                 Pointcut.create("spring-start","com.eazytec.middleware.apm.advice.CatAroundAdvice")
                         .execution(Execution.createByClassName("org.springframework.context.support.AbstractApplicationContext").methodName("finishRefresh").modifiers(AccessFlag.PROTECTED))
         );
+
+        regular.add(
+                Pointcut.create("spring-rest-controller","com.eazytec.middleware.apm.plugin.spring.ControllerAroundAdvice")
+                        .execution(Execution.createByAnnotation("org.springframework.web.bind.annotation.RestController").modifiers(AccessFlag.PUBLIC))
+        );
         regular.add(
                 Pointcut.create("spring-controller","com.eazytec.middleware.apm.plugin.spring.ControllerAroundAdvice")
-                        .execution(Execution.createByAnnotation("org.springframework.stereotype.Controller"))
+                        .execution(Execution.createByAnnotation("org.springframework.stereotype.Controller").modifiers(AccessFlag.PUBLIC))
         );
 
         regular.add(
                 Pointcut.create("spring-service","com.eazytec.middleware.apm.plugin.spring.ServiceAroundAdvice")
-                        .execution(Execution.createByAnnotation("org.springframework.stereotype.Service"))
+                        .execution(Execution.createByAnnotation("org.springframework.stereotype.Service").modifiers(AccessFlag.PUBLIC))
         );
 
         regular.add(
                 Pointcut.create("dubbo-client","com.eazytec.middleware.apm.plugin.dubbo.DubboClientAroundAdvice")
-                        .execution(Execution.createByClassName("com.alibaba.dubbo.rpc.cluster.support.AbstractClusterInvoker").methodName("invoke"))
+                        .execution(Execution.createByClassName("com.alibaba.dubbo.rpc.cluster.support.AbstractClusterInvoker").methodName("invoke").modifiers(AccessFlag.PUBLIC))
         );
 
         regular.add(
                 Pointcut.create("dubbo-server","com.eazytec.middleware.apm.plugin.dubbo.DubboServerAroundAdvice")
-                        .execution(Execution.createByClassName("com.alibaba.dubbo.rpc.proxy.AbstractProxyInvoker").methodName("invoke"))
+                        .execution(Execution.createByClassName("com.alibaba.dubbo.rpc.proxy.AbstractProxyInvoker").methodName("invoke").modifiers(AccessFlag.PUBLIC))
         );
 
         regular.add(
                 Pointcut.create("http-client","com.eazytec.middleware.apm.plugin.http.HttpClientAroundAdvice")
-                        .execution(Execution.createByInterface("org.apache.http.client.HttpClient"))
+                        .execution(Execution.createByInterface("org.apache.http.client.HttpClient").modifiers(AccessFlag.PUBLIC))
+        );
+
+        regular.add(
+                Pointcut.create("spring-http-client","com.eazytec.middleware.apm.plugin.http.SpringHttpClientAroundAdvice")
+                        .execution(Execution.createByInterface("org.springframework.http.client.ClientHttpRequest")
+                                .methodName("execute"))
         );
 
         regular.add(
                 Pointcut.create("http-server","com.eazytec.middleware.apm.plugin.http.HttpServerAroundAdvice")
                         .execution(Execution.createByClassName("org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter")
-                                .methodName("handleInternal").modifiers(AccessFlag.PROTECTED) //TODO：覆盖默认配置
+                                .methodName("handleInternal")
                                 .paramTypes("javax.servlet.http.HttpServletRequest,javax.servlet.http.HttpServletResponse,org.springframework.web.method.HandlerMethod"))
         );
 
         regular.add(
                 Pointcut.create("db-mysql","com.eazytec.middleware.apm.plugin.db.MysqlClientAroundAdvice")
-                        .execution(Execution.createByClassName("com.mysql.jdbc.PreparedStatement").methodName("execute"))
-                        .execution(Execution.createByClassName("com.mysql.jdbc.PreparedStatement").methodName("executeQuery"))
-                        .execution(Execution.createByClassName("com.mysql.jdbc.PreparedStatement").methodName("executeUpdate"))
+                        .execution(Execution.createByClassName("com.mysql.jdbc.PreparedStatement").methodName("execute").modifiers(AccessFlag.PUBLIC))
+                        .execution(Execution.createByClassName("com.mysql.jdbc.PreparedStatement").methodName("executeQuery").modifiers(AccessFlag.PUBLIC))
+                        .execution(Execution.createByClassName("com.mysql.jdbc.PreparedStatement").methodName("executeUpdate").modifiers(AccessFlag.PUBLIC))
         );
 
     }

@@ -14,14 +14,14 @@ public class HttpClientAroundAdvice extends CatAroundAdvice {
 
     @Override
     protected String getTransactionType(String originMethodName, Object obj, Method method, Object[] args) {
-        return "Send.HttpRequest";
+        return "Call";
     }
 
     @Override
     protected String getTransactionName(String originMethodName, Object obj, Method method, Object[] args) {
         HttpContext httpContext =  getHttpContext(args);
         URI uri = httpContext.getUri();
-        return  "[" + httpContext.getHttpMethod()+"]" + uri.getScheme()+"://"+uri.getAuthority()+getConcreteUri(uri.getPath());
+        return  "[http-" + httpContext.getHttpMethod()+"]" + uri.getScheme()+"://"+uri.getAuthority()+getConcreteUri(uri.getPath());
     }
 
     @Override

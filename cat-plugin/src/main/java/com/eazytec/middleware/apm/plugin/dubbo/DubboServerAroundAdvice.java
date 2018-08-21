@@ -11,7 +11,7 @@ public class DubboServerAroundAdvice extends CatAroundAdvice {
 
     @Override
     protected String getTransactionType(String originMethodName, Object obj, Method method, Object[] args) {
-        return "Provide.Dubbo.Service";
+        return "Service";
     }
 
     @Override
@@ -19,10 +19,10 @@ public class DubboServerAroundAdvice extends CatAroundAdvice {
         if(args.length > 0 && args[0] != null){
             try{
                 RpcInvocation rpcInvocation =  (RpcInvocation)args[0];
-                return rpcInvocation.getInvoker().getInterface().getSimpleName()+"."+rpcInvocation.getMethodName();
+                return "[dubbo] "+rpcInvocation.getInvoker().getInterface().getSimpleName()+"."+rpcInvocation.getMethodName();
             }catch (Exception ignore){  }
         }
-        return "unknown";
+        return "[dubbo] unknown";
     }
 
     @Override

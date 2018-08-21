@@ -20,16 +20,18 @@ public class CatAroundAdvice implements AroundAdvice{
     public static final String E_CLIENT_DOMAIN = "client.domain";
     public static final String E_CLIENT_ADDR = "client.address";
 
+    public static final String SPLIT = " ";
 
     @Override
     public Object invoke(String originMethodName,Object obj, Method method, Object[] args) throws Throwable {
 
-        String type = getTransactionType(originMethodName,obj,method,args) + " ";
+        String type = getTransactionType(originMethodName,obj,method,args);
         String name = getTransactionName(originMethodName,obj,method,args);
         if(name == null || name.length() == 0){
             //不开启监控
             return method.invoke(obj,args);
         }
+        name = SPLIT + name;
 //        System.out.println(String.format("invoke -> %s",originMethodName));
 
         Transaction t = Cat.newTransaction(type,name);
