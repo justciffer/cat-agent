@@ -42,20 +42,24 @@ public class MethodProxy {
     public static void aroundProxy(String targetClassName, CtClass targetClass, CtMethod targetMethod, String advice)
             throws NotFoundException, CannotCompileException {
         AgentDebug.info("create proxy -> %s",targetMethod.getLongName());
-
         String uniqueName = targetMethod.getName() + Math.abs(targetMethod.hashCode());
+        String newMethodName = uniqueName + PROXY_CLASS_NAME_SUFFIX;
+        String methodCache = uniqueName + PROXY_METHOD_VARIABLE;
+
+        try{
+            //创建变量存储method对象  %targetMethod_name%_CatProxyMethod
+            CtField ctField = CtField.make("private static java.lang.reflect.Method " + methodCache + " = null;", targetClass);
+            targetClass.addField(ctField);
+        }catch (Exception e){
+            AgentDebug.info("create proxy error -> %s has already proxy ",targetMethod.getLongName());
+            return;
+        }
 
         //copy方法(不会复制注解)  %targetMethod%$CatProxy
         CtMethod newMethod = CtNewMethod.copy(targetMethod,targetClass,null);
-        String newMethodName = uniqueName + PROXY_CLASS_NAME_SUFFIX;
         newMethod.setName(newMethodName);
         newMethod.setModifiers(AccessFlag.PUBLIC); //TODO: 必须设置成public
         targetClass.addMethod(newMethod);
-
-        //创建变量存储method对象  %targetMethod_name%_CatProxyMethod
-        String methodCache = uniqueName + PROXY_METHOD_VARIABLE;
-        CtField ctField = CtField.make("private static java.lang.reflect.Method " + methodCache + " = null;", targetClass);
-        targetClass.addField(ctField);
 
         //替换 targetMethod内容为代理函数
         String logName = targetClass.getSimpleName() + "." + getMethodLogName(targetMethod);

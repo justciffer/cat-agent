@@ -4,6 +4,7 @@ package com.eazytec.middleware.apm.match;
 
 import com.eazytec.middleware.apm.AgentInit;
 import javassist.*;
+import javassist.bytecode.AccessFlag;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -93,16 +94,20 @@ public class Regular extends ArrayList<Pointcut>{
                  }
              }
         }
+
         return null;
     }
 
     public boolean matchMethod(CtMethod ctMethod,Execution execution) {
-        if(null != execution.getModifiers()) {
-            if (!execution.getModifiers().equals(ctMethod.getModifiers())) {
-                return false;
-            }
-        }else{
-            if(!AgentInit.checkModifiers(ctMethod)){
+        int modifier = ctMethod.getModifiers();
+        //静态|抽象| 编译器引入 方法不代理
+        if(Modifier.isStatic(modifier) || Modifier.isAbstract(modifier)
+                ||(modifier & AccessFlag.SYNTHETIC) != 0){
+            return false;
+        }
+
+        if(null != execution.getModifier()) {
+            if (!execution.getModifier().match(ctMethod.getModifiers())) {
                 return false;
             }
         }

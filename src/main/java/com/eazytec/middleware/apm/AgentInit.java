@@ -8,6 +8,7 @@ import javassist.bytecode.AccessFlag;
 
 import java.io.File;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.HashMap;
@@ -21,7 +22,6 @@ public class AgentInit {
 
     private static final Set<String> excludePackages = new HashSet<>();
     private static final Set<String> excludeKeyWords = new HashSet<>();
-    private static final Set<Integer> allowedMethodModifiers = new HashSet<>(); //方法默认访问控制
 
     private static final Map<String,String> modes = new HashMap<>();
 
@@ -47,48 +47,47 @@ public class AgentInit {
      /*   excludeKeyWords.add("$Proxy");
         excludeKeyWords.add("CGLIB$$");*/
 
-//        allowedMethodModifiers.add(AccessFlag.PUBLIC); //TODO：默认获取public
-
         modes.put("springboot","org.springframework.boot.loader.LaunchedURLClassLoader");
 
         regular.add(
                 Pointcut.create("spring-start","com.eazytec.middleware.apm.advice.CatAroundAdvice")
-                        .execution(Execution.createByClassName("org.springframework.context.support.AbstractApplicationContext").methodName("finishRefresh").modifiers(AccessFlag.PROTECTED))
+                        .execution(Execution.createByClassName("org.springframework.context.support.AbstractApplicationContext").methodName("finishRefresh")
+                                .modifier(AgentModifier.PROTECTED))
         );
 
         regular.add(
                 Pointcut.create("spring-rest-controller","com.eazytec.middleware.apm.plugin.spring.ControllerAroundAdvice")
-                        .execution(Execution.createByAnnotation("org.springframework.web.bind.annotation.RestController").modifiers(AccessFlag.PUBLIC))
+                        .execution(Execution.createByAnnotation("org.springframework.web.bind.annotation.RestController").modifier(AgentModifier.PUBLIC))
         );
         regular.add(
                 Pointcut.create("spring-controller","com.eazytec.middleware.apm.plugin.spring.ControllerAroundAdvice")
-                        .execution(Execution.createByAnnotation("org.springframework.stereotype.Controller").modifiers(AccessFlag.PUBLIC))
+                        .execution(Execution.createByAnnotation("org.springframework.stereotype.Controller").modifier(AgentModifier.PUBLIC))
         );
 
         regular.add(
                 Pointcut.create("spring-service","com.eazytec.middleware.apm.plugin.spring.ServiceAroundAdvice")
-                        .execution(Execution.createByAnnotation("org.springframework.stereotype.Service").modifiers(AccessFlag.PUBLIC))
+                        .execution(Execution.createByAnnotation("org.springframework.stereotype.Service").modifier(AgentModifier.PUBLIC))
         );
 
         regular.add(
                 Pointcut.create("dubbo-client","com.eazytec.middleware.apm.plugin.dubbo.DubboClientAroundAdvice")
-                        .execution(Execution.createByClassName("com.alibaba.dubbo.rpc.cluster.support.AbstractClusterInvoker").methodName("invoke").modifiers(AccessFlag.PUBLIC))
+                        .execution(Execution.createByClassName("com.alibaba.dubbo.rpc.cluster.support.AbstractClusterInvoker").methodName("invoke").modifier(AgentModifier.PUBLIC))
         );
 
         regular.add(
                 Pointcut.create("dubbo-server","com.eazytec.middleware.apm.plugin.dubbo.DubboServerAroundAdvice")
-                        .execution(Execution.createByClassName("com.alibaba.dubbo.rpc.proxy.AbstractProxyInvoker").methodName("invoke").modifiers(AccessFlag.PUBLIC))
+                        .execution(Execution.createByClassName("com.alibaba.dubbo.rpc.proxy.AbstractProxyInvoker").methodName("invoke").modifier(AgentModifier.PUBLIC))
         );
 
         regular.add(
                 Pointcut.create("http-client","com.eazytec.middleware.apm.plugin.http.HttpClientAroundAdvice")
-                        .execution(Execution.createByInterface("org.apache.http.client.HttpClient").modifiers(AccessFlag.PUBLIC))
+                        .execution(Execution.createByInterface("org.apache.http.client.HttpClient").modifier(AgentModifier.PUBLIC))
         );
 
         regular.add(
                 Pointcut.create("spring-http-client","com.eazytec.middleware.apm.plugin.http.SpringHttpClientAroundAdvice")
                         .execution(Execution.createByInterface("org.springframework.http.client.ClientHttpRequest")
-                                .methodName("execute"))
+                                .methodName("execute").modifier(AgentModifier.PUBLIC))
         );
 
         regular.add(
@@ -100,9 +99,9 @@ public class AgentInit {
 
         regular.add(
                 Pointcut.create("db-mysql","com.eazytec.middleware.apm.plugin.db.MysqlClientAroundAdvice")
-                        .execution(Execution.createByClassName("com.mysql.jdbc.PreparedStatement").methodName("execute").modifiers(AccessFlag.PUBLIC))
-                        .execution(Execution.createByClassName("com.mysql.jdbc.PreparedStatement").methodName("executeQuery").modifiers(AccessFlag.PUBLIC))
-                        .execution(Execution.createByClassName("com.mysql.jdbc.PreparedStatement").methodName("executeUpdate").modifiers(AccessFlag.PUBLIC))
+                        .execution(Execution.createByClassName("com.mysql.jdbc.PreparedStatement").methodName("execute").modifier(AgentModifier.PUBLIC))
+                        .execution(Execution.createByClassName("com.mysql.jdbc.PreparedStatement").methodName("executeQuery").modifier(AgentModifier.PUBLIC))
+                        .execution(Execution.createByClassName("com.mysql.jdbc.PreparedStatement").methodName("executeUpdate").modifier(AgentModifier.PUBLIC))
         );
 
     }
@@ -141,18 +140,6 @@ public class AgentInit {
             }
         }
         return Thread.currentThread().getContextClassLoader().getClass().getName();
-    }
-
-    public static boolean checkModifiers(CtMethod m ){
-        if (allowedMethodModifiers.isEmpty()) {
-            return true;
-        }
-        for (Integer modify : allowedMethodModifiers) {
-            if (modify.equals(m.getModifiers())) {
-                return true;
-            }
-        }
-        return false;
     }
 
     //排除包路径

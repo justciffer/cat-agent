@@ -1,5 +1,7 @@
 package com.eazytec.middleware.apm.match;
 
+import com.eazytec.middleware.apm.AgentModifier;
+
 import java.util.Arrays;
 import java.util.List;
 
@@ -9,7 +11,7 @@ public class Execution {
     private String interfaceName;
     private String className;
     private String methodName;
-    private Integer modifiers;
+    private AgentModifier modifier;
     private List<String> paramTypes;
 
     public static Execution createByClassName(String className){
@@ -117,15 +119,28 @@ public class Execution {
         return this;
     }
 
-    public Integer getModifiers() {
-        return modifiers;
+    public AgentModifier getModifier() {
+        return modifier;
     }
 
-    public void setModifiers(Integer modifiers) {
-        this.modifiers = modifiers;
+    public void setModifier(AgentModifier modifier) {
+        this.modifier = modifier;
     }
-    public Execution modifiers(Integer modify) {
-        this.modifiers = modify;
+    public Execution modifier(AgentModifier modify) {
+        this.modifier = modify;
         return this;
+    }
+
+    @Override
+    public String toString() {
+        return "Execution{" +
+                "advice='" + advice + '\'' +
+                ", annotation='" + annotation + '\'' +
+                ", interfaceName='" + interfaceName + '\'' +
+                ", className='" + className + '\'' +
+                ", methodName='" + methodName + '\'' +
+                ", modifier=" + modifier +
+                ", paramTypes=" + paramTypes +
+                '}';
     }
 }
