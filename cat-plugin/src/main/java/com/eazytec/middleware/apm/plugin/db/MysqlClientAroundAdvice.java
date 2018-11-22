@@ -11,38 +11,25 @@ import java.lang.reflect.Method;
 
 public class MysqlClientAroundAdvice extends CatAroundAdvice {
 
-    private volatile static boolean effective = true;
-
-    private volatile static Field originalSqlField = null;
-
-    public MysqlClientAroundAdvice() {
-        try {
-            originalSqlField = PreparedStatement.class.getDeclaredField("originalSql");
-            if(null != originalSqlField){
-                originalSqlField.setAccessible(true);
-            }else{
-                effective = false;
-            }
-        } catch (Exception e) {
-            effective = false;
-        }
-    }
-
     @Override
     public Object invoke(String originMethodName, Object obj, Method method, Object[] args) throws Throwable {
-        if (effective && obj instanceof PreparedStatement) {
+        if (obj instanceof PreparedStatement) {
             PreparedStatement ps = (PreparedStatement)obj;
 
             String type = "SQL";
-            String name = SPLIT + (String)originalSqlField.get(ps);
-
-//            System.out.println(String.format("invoke -> %s",originMethodName));
+            String name;
+            try{
+                name = SPLIT + ps.getPreparedSql();
+            }catch (Exception e){
+                name = SPLIT + "can not get sql";
+            }
+            //System.out.println(String.format("invoke -> %s",originMethodName));
 
             Transaction t = Cat.newTransaction(type,name);
             if (ps.getConnection() instanceof ConnectionImpl){
                 Cat.logEvent("Sql.DataBase", ((ConnectionImpl)ps.getConnection()).getURL());
             }
-            //          t.addData("FullSQL", ps.toString().split(":")[1]);
+            // t.addData("FullSQL", ps.toString().split(":")[1]);
             Object o = null;
             try{
                 o = method.invoke(obj,args);
